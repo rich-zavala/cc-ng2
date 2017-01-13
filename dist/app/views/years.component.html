@@ -1,0 +1,10 @@
+<ul>
+  <li *ngFor="let year of years.reverse()">
+    <a (click)="selectYear(year);" href="#">{{year.year}}</a>
+		<span *ngIf="year === selectedYear">**</span>
+  </li>
+</ul>
+<hr />
+<div *ngIf="selectedYear">
+  <comics-in-day [date]="date" *ngFor="let date of selectedYear.dates"></comics-in-day>
+</div>
