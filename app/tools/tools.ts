@@ -21,6 +21,29 @@ export function db2Comic(c: any): any {
 	return r;
 }
 
+// Transform a "Comic" to DB abject
+export function comic2db(c: Comic): any {
+	let returnObject = {
+		_id: c.id,
+		title: c.title,
+		volume: c.volume,
+		acquired: c.acquired,
+		dateAcquired: c.dateAcquired,
+		variant: c.variant,
+		price: c.price,
+		date: c.date,
+		dateString: c.dateString,
+		dateRegistered: c.dateRegistered,
+		year: new Date(c.date).getFullYear()
+	};
+
+	if (c._rev) {
+		returnObject['_rev'] = c._rev;
+	}
+
+	return returnObject;
+}
+
 // Reduce string to alphanumeric
 export function alpha(s: string) {
 	return typeof s === 'string' ? s.toLowerCase().replace(/[^a-z0-9]/gi, '') : '';

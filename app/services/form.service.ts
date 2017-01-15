@@ -45,7 +45,7 @@ export class FormService {
 					returnObject.errorMsg = 'Record already in DB.';
 					return returnObject;
 				} else {
-					return this.dbs.connections.db.put(this.comic2db(comic)).then(() => {
+					return this.dbs.connections.db.put(Tools.comic2db(comic)).then(() => {
 						// Insert new title to catalog
 						let title_id = Tools.alpha(comic.title);
 						this.dbs.connections.dbt.get(title_id)
@@ -145,23 +145,6 @@ export class FormService {
 			.catch((e: any) => {
 				console.warn('Error on TITLE put!', t, e);
 			});
-	}
-
-	// Transform a "Comic" to DB abject
-	private comic2db(c: Comic): any {
-		return {
-			_id: c.id,
-			title: c.title,
-			volume: c.volume,
-			acquired: c.acquired,
-			dateAcquired: c.dateAcquired,
-			variant: c.variant,
-			price: c.price,
-			date: c.date,
-			dateString: c.dateString,
-			dateRegistered: c.dateRegistered,
-			year: new Date(c.date).getFullYear()
-		};
 	}
 
 	// Load fake data

@@ -6,6 +6,7 @@ import { Comic } from './interfaces/comic';
 import { Year } from './interfaces/year';
 import { Day } from './interfaces/day';
 
+import { DBService } from './services/db.service';
 import { YearsService } from './services/years.service';
 
 @Component({
@@ -21,7 +22,7 @@ import { YearsService } from './services/years.service';
 				<tr *ngIf="comics.length === 0"><td colspan="4">Loading...</td></tr>
 				<tbody *ngIf="comics.length > 0">
 					<tr *ngFor="let comic of comics">
-						<td>{{comic.title}} #{{comic.volume}}</td>
+						<td>{{comic.title}} #{{comic.volume}} - {{comic.dateAcquired}}</td>
 						<td>{{ comic.price | currency : 'USD' : true : '2.2-2' }}</td>
 						<td><input type="checkbox" [(ngModel)]="comic.acquired" (change)="acquire($event, comic)" /></td>
 						<td><button (click)="delete(comic)">x</button></td>
@@ -37,7 +38,7 @@ export class DayComponent implements OnInit {
 	@Input() day: Day;
 	comics: Comic[] = [];
 
-	constructor(private ys: YearsService) { }
+	constructor(private ys: YearsService, private db: DBService) { }
 
 	ngOnInit() {
 		this.fillComics();
@@ -59,16 +60,44 @@ export class DayComponent implements OnInit {
 
 	acquire(event: any, comic: Comic) {
 		if (comic.acquired && confirm('Sure?')) {
-			comic.acquire(false);
+			comic.acquiring = true;
 		} else if (!comic.acquired) {
 			comic.acquiring = true;
-
-
-
-			comic.acquire(true);
 		}
 
-		event.currentTarget.checked = comic.acquired;
+		if (comic.acquiring) {
+			this.doAcquire(comic)
+				.then((done) => {
+					if (done) {
+						event.target.checked = true;
+						console.log('Done!!!')
+					} else {
+						alert('An error ocourred.')
+					}
+
+				})
+				.catch(Tools.handleError)
+		} else {
+			// Return to original state
+		}
+	}
+
+	doAcquire(comic: Comic): Promise<boolean> {
+		return this.db.connections.db.get(comic.id)
+			.then((dbRecord: any) => {
+				let dbComic = Tools.db2Comic(dbRecord);
+				dbComic.acquire();
+				return this.db.connections.db.put(Tools.comic2db(dbComic))
+					.then(() => true)
+					.catch((e: any) => {
+						Tools.handleError(e);
+						return false;
+					});
+			})
+			.catch((e: any) => {
+				Tools.handleError(e);
+				return false;
+			});
 	}
 
 	info(comic: Comic) {
