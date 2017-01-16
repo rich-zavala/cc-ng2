@@ -4,6 +4,7 @@ import { Observable, Subject } from 'rxjs/Rx';
 import * as Tools from './tools/tools';
 
 import { DBService } from './services/db.service';
+import { YearsService } from './services/years.service';
 import { RecordsService } from './services/records.service';
 
 import { Comic } from './interfaces/comic';
@@ -20,9 +21,16 @@ import { Title } from './interfaces/title';
 								<a (click)="fillRecords(title)">{{title.title}} ({{title.records.length}})</a>
 								<div *ngIf="title.show">
 									<div *ngIf="title.docs.length === 0">Loading...</div>
-									<ul *ngIf="title.docs.length > 0">
-										<li *ngFor="let doc of title.docs | orderBy : 'volume'">#{{doc.volume}} \${{doc.price}}</li>
-									</ul>
+									<div *ngIf="title.docs.length > 0">
+										<ul>
+											<li *ngFor="let doc of title.docs | orderBy : 'volume'; let i = index;">
+												#{{doc.volume}} {{doc.price | currency : 'USD' : true : '2.2-2'}}
+												<button (click)="delete(title, doc, i)">x</button>
+												<button (click)="info(doc)">i</button>
+											</li>
+										</ul>
+										<div>{{title.docs.length}} records, {{title.sum | currency : 'USD' : true : '2.2-2'}}</div>
+									</div>
 								</div>
 							<hr>
 							</div>
@@ -34,7 +42,7 @@ export class RecordsComponent implements OnInit {
 	titles$: Observable<Title[]>;
 	private searchTerms = new Subject();
 
-	constructor(private db: DBService, private dbs: RecordsService) {
+	constructor(private dbs: RecordsService, private db: DBService, private ys: YearsService) {
 		console.log('records.initialized');
 	}
 
@@ -75,5 +83,31 @@ export class RecordsComponent implements OnInit {
 		} else {
 			title.show = false;
 		}
+	}
+
+	// Delete a record
+	delete(title: Title, comic: Comic, index: number) {
+		console.log(comic)
+		if (confirm('Sure?')) {
+			comic.deleting = true;
+			this.ys.remove(comic)
+				.then((result) => {
+					if (result) {
+						title.docs.splice(index, 1);
+
+						/*this.comics.splice(this.comics.findIndex(c => c.id === comic.id), 1);
+						this.day.sum -= comic.price;*/
+					} else {
+						alert('There\'s been an error when deleting...');
+						console.log(result);
+						comic.deleting = false;
+					}
+				});
+		}
+	}
+
+	// Info
+	info(comic: Comic){
+		this.db.info(comic);
 	}
 }

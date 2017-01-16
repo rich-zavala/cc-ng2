@@ -62,12 +62,13 @@ export class YearsService {
 	}
 
 	// Get all records of a year
-	private getComics(): Promise<Comic[]> {
-		console.warn('db.years.comics.fetching.' + this.selectedYear.year);
+	private getComics(year?: number): Promise<Comic[]> {
+		let yearToFetch = typeof year === 'undefined' ? this.selectedYear.year : year;
+		console.warn('db.years.comics.fetching.' + yearToFetch);
 		return this.dbs.connections.db.allDocs({
 			include_docs: true,
-			startkey: this.selectedYear.year.toString(),
-			endkey: (this.selectedYear.year + 1).toString(),
+			startkey: yearToFetch.toString(),
+			endkey: (yearToFetch + 1).toString(),
 			inclusive_end: false
 		})
 			.then((dbComics: any) => {
@@ -90,7 +91,7 @@ export class YearsService {
 								return this.yearUpdate(dayUpdateResult)
 									.then((tmp) => {
 										// Check if currently selected year was deleted
-										if (tmp.yearsLeft.findIndex((y: Year) => y.year === this.selectedYear.year) === -1) {
+										if (typeof this.selectedYear !== 'undefined' && tmp.yearsLeft.findIndex((y: Year) => y.year === this.selectedYear.year) === -1) {
 											if (tmp.yearsLeft.length > 0) {
 												this.selectYear(tmp.yearsLeft[0]);
 												this.selectedYear$.next(this.selectedYear);
@@ -141,7 +142,8 @@ export class YearsService {
 					dayInfo.sum = resultYear.dates[i].sum;
 				}
 
-				return this.getComics()
+
+				return this.getComics(comic.getYear())
 					.then((resultComics: Comic[]) => {
 						if (dayInfo.sum === 0) { // Remove day
 							resultYear.dates.splice(dayInfo.index, 1);
@@ -185,6 +187,7 @@ export class YearsService {
 	// Record deletion handler
 	private handleError(e: any): boolean {
 		Tools.handleError(e);
+		console.log(666)
 		return false;
 	}
 }
